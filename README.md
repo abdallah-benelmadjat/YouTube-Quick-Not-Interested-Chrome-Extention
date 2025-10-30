@@ -75,3 +75,4 @@ A Chrome extension that adds a lightweight “Not Interested” button to every 
 
 | Permission | Why it’s needed |
 |-
+
