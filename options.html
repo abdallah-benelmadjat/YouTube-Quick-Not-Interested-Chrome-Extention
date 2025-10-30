@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YouTube Quick Not Interested - Options</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1 { color: #333; }
+        label { display: block; margin: 10px 0; }
+        input[type="radio"] { margin-right: 10px; }
+        button { margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .saved { color: green; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>YouTube Quick Not Interested - Options</h1>
+    <p>Choose the dismissal reason to use when marking videos as "Not interested".</p>
+    <form id="optionsForm">
+        <label><input type="radio" name="reason" value="first"> Use the first available reason (default)</label>
+        <label><input type="radio" name="reason" value="watched"> I've already watched the video</label>
+        <label><input type="radio" name="reason" value="dont_like"> I don't like the video</label>
+        <button type="submit">Save</button>
+    </form>
+    <div id="savedMessage" class="saved" style="display: none;">Options saved!</div>
+    <script src="options.js"></script>
+</body>
+</html>
