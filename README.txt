@@ -1,69 +1,77 @@
 # YouTube Quick Not Interested
 
-A Chrome extension that adds a discrete “Not Interested” button to every YouTube thumbnail, letting you declutter your recommendations with a single click.
+A Chrome extension that adds a lightweight “Not Interested” button to every YouTube thumbnail, giving you full control over the videos that appear in your feed.
 
-## Features
+---
 
-- **One-click dismissal**  
-  Hover over any thumbnail and click the red × to hide the video immediately.
+## Table of Contents
+1. [Key Features](#key-features)  
+2. [Demo](#demo)  
+3. [Installation](#installation)  
+4. [Usage](#usage)  
+5. [Configuration](#configuration)  
+6. [Permissions](#permissions)  
+7. [Development](#development)  
+8. [Contributing](#contributing)  
+9. [Changelog](#changelog)  
+10. [License](#license)
 
-- **Selectable feedback**  
-  Pick the reason YouTube should record (e.g., “Don’t like this video” or “Already watched”) in the options panel.
+---
 
-- **Works with infinite scroll**  
-  Buttons are injected into all thumbnails, including those loaded dynamically as you scroll.
+## Key Features
+| Feature | Description |
+|---------|-------------|
+| One-click dismissal | Hover over any thumbnail and click the red × to hide it instantly. |
+| Selectable feedback | Choose the dismissal reason YouTube should receive (e.g., “Don’t like” or “Already watched”). |
+| Infinite-scroll support | Buttons appear on all thumbnails, including those loaded dynamically. |
+| UI-change resilience | A mutation observer re-attaches buttons if YouTube’s markup changes. |
+| Privacy-first design | Requires minimal permissions; never collects or transmits user data. |
 
-- **Resilient to UI changes**  
-  Lightweight script monitors the page and re-attaches buttons if YouTube’s markup shifts.
+---
 
-- **Minimal permissions, zero tracking**  
-  Requires only `activeTab` and page access for YouTube; it collects nothing about you or your browsing.
+## Demo
+> **Screenshots**  
+> *Replace the placeholders below with real images once available.*  
 
-## Installation (developer mode)
+| Before | After |
+|:------:|:-----:|
+| ![Before](docs/before.png) | ![After](docs/after.png) |
+
+---
+
+## Installation
+
+### From source (Developer Mode)
 
 1. Clone or download this repository.  
 2. Open `chrome://extensions/` in Chrome.  
-3. Enable **Developer mode**.  
-4. Click **Load unpacked** and select the folder you just downloaded.  
-5. The extension icon will appear in the toolbar.
+3. Enable **Developer mode** in the top-right corner.  
+4. Click **Load unpacked** and select the project folder.  
+5. The extension icon will appear in your toolbar.
+
+> **Tip:** Pin the icon for quick access to the Options page.
+
+---
 
 ## Usage
 
-1. Browse to YouTube.  
-2. Hover over any video; a red × appears in the top-right corner.  
+1. Navigate to `youtube.com`.  
+2. Hover over any video thumbnail. A red × appears in the top-right corner.  
 3. Click the × to mark the video as “Not Interested.”  
-4. (Optional) Change the default feedback reason via the extension’s options page.
+4. To change the default dismissal reason, open the extension’s Options (right-click the toolbar icon → **Options**).
 
-## Options
+---
 
-Right-click the toolbar icon → **Options** (or open the entry in `chrome://extensions/`) to:
+## Configuration
 
-- Choose the default dismissal reason.
-- Toggle automatic feedback submission.
+| Setting | Description |
+|---------|-------------|
+| Dismissal reason | Default feedback sent to YouTube (`I don't like this video`, `I've already watched this video`, etc.). |
+| Feedback submission | Toggle whether to send feedback silently or display YouTube’s native confirmation dialog. |
 
-## Permissions Required
+---
 
-| Permission | Purpose |
-|------------|---------|
-| `activeTab` | Inject content scripts into the current YouTube tab. |
-| `https://www.youtube.com/*` | Run on all YouTube pages. |
+## Permissions
 
-The extension never sends data to external servers.
-
-## Changelog
-
-### 1.0.1
-- Added options page for custom dismissal reasons.  
-- Improved error handling for dynamic page changes.  
-- Updated manifest for Chrome 88+.
-
-### 1.0.0
-- Initial release with one-click dismissal.
-
-## License
-
-This project is licensed under the MIT License. See `LICENSE` for details.
-
-## Privacy
-
-YouTube Quick Not Interested does **not** collect, store, or transmit any personal data. All actions replicate what a user can already do manually within YouTube’s interface.
+| Permission | Why it’s needed |
+|-
