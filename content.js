@@ -33,7 +33,6 @@ function addButton(anchor) {
   wrapper.appendChild(btn);
 
   btn.addEventListener('click', (e) => {
-    console.log("asdf");
     e.preventDefault();
     e.stopPropagation();
     handleNotInterested(anchor);
