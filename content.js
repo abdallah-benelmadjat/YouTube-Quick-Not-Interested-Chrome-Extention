@@ -44,6 +44,11 @@ const VIDEO_CONTAINER_SELECTORS = [
   '.style-scope.ytd-item-section-renderer',
 ];
 
+const DONT_RECOMMEND_DISABLED_TAGS = new Set([
+  'ytd-compact-radio-renderer',
+  'ytd-compact-playlist-renderer',
+]);
+
 const SPRITE_ELEMENT_ID = 'nqi-action-sprite';
 const NOT_INTERESTED_SYMBOL_ID = 'nqi-icon-not-interested';
 const DONT_RECOMMEND_SYMBOL_ID = 'nqi-icon-dont-recommend';
@@ -123,7 +128,11 @@ function addButton(anchor) {
     );
   }
 
-  if (!wrapper.querySelector('.notinterested-btn--secondary')) {
+  const shouldShowSecondary = shouldShowDontRecommend(anchor);
+  const existingSecondary = wrapper.querySelector('.notinterested-btn--secondary');
+  if (!shouldShowSecondary && existingSecondary) {
+    existingSecondary.remove();
+  } else if (shouldShowSecondary && !existingSecondary) {
     createActionButton(
       wrapper,
       'notinterested-btn--secondary',
@@ -132,6 +141,30 @@ function addButton(anchor) {
       () => handleDontRecommend(anchor),
     );
   }
+}
+
+function shouldShowDontRecommend(anchor) {
+  const container = getVideoContainer(anchor);
+  if (!container) return true;
+
+  if (container.matches('ytd-compact-radio-renderer, ytd-compact-playlist-renderer')) {
+    return false;
+  }
+
+  const tagName = container.tagName ? container.tagName.toLowerCase() : '';
+  if (DONT_RECOMMEND_DISABLED_TAGS.has(tagName)) {
+    return false;
+  }
+
+  if (container.classList && container.classList.contains('yt-lockup-view-model--collection-stack-2')) {
+    return false;
+  }
+
+  if (container.querySelector('yt-collection-thumbnail-view-model, yt-collections-stack')) {
+    return false;
+  }
+
+  return true;
 }
 
 function getVideoContainer(anchor) {
