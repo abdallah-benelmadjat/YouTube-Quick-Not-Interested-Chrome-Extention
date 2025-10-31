@@ -47,7 +47,15 @@ const VIDEO_CONTAINER_SELECTORS = [
 const DONT_RECOMMEND_DISABLED_TAGS = new Set([
   'ytd-compact-radio-renderer',
   'ytd-compact-playlist-renderer',
+  'ytd-playlist-panel-video-renderer',
 ]);
+
+const BUTTONLESS_CONTAINER_SELECTORS = [
+  'ytd-playlist-panel-video-renderer',
+  'ytd-playlist-panel-renderer',
+];
+
+const BUTTONLESS_CONTAINER_SELECTOR = BUTTONLESS_CONTAINER_SELECTORS.join(', ');
 
 const SPRITE_ELEMENT_ID = 'nqi-action-sprite';
 const NOT_INTERESTED_SYMBOL_ID = 'nqi-icon-not-interested';
@@ -107,6 +115,12 @@ function createActionButton(wrapper, modifierClass, title, symbolId, onClick) {
 function addButton(anchor) {
   if (!anchor || !anchor.parentElement) return;
 
+  const container = getVideoContainer(anchor);
+  if (shouldSkipButtons(container)) {
+    cleanupButtons(anchor);
+    return;
+  }
+
   ensureSpriteInjected();
 
   let wrapper = anchor.closest('.notinterested-wrapper');
@@ -128,7 +142,7 @@ function addButton(anchor) {
     );
   }
 
-  const shouldShowSecondary = shouldShowDontRecommend(anchor);
+  const shouldShowSecondary = shouldShowDontRecommend(anchor, container);
   const existingSecondary = wrapper.querySelector('.notinterested-btn--secondary');
   if (!shouldShowSecondary && existingSecondary) {
     existingSecondary.remove();
@@ -143,9 +157,13 @@ function addButton(anchor) {
   }
 }
 
-function shouldShowDontRecommend(anchor) {
-  const container = getVideoContainer(anchor);
+function shouldShowDontRecommend(anchor, containerOverride) {
+  const container = containerOverride || getVideoContainer(anchor);
   if (!container) return true;
+
+  if (shouldSkipButtons(container)) {
+    return false;
+  }
 
   if (container.matches('ytd-compact-radio-renderer, ytd-compact-playlist-renderer')) {
     return false;
@@ -165,6 +183,34 @@ function shouldShowDontRecommend(anchor) {
   }
 
   return true;
+}
+
+function shouldSkipButtons(container) {
+  if (!container || typeof container.matches !== 'function') return false;
+  if (container.matches(BUTTONLESS_CONTAINER_SELECTOR)) {
+    return true;
+  }
+  if (typeof container.closest === 'function' && container.closest('ytd-playlist-panel-renderer')) {
+    return true;
+  }
+  return false;
+}
+
+function cleanupButtons(anchor) {
+  const wrapper = anchor.closest('.notinterested-wrapper');
+  if (!wrapper) return;
+
+  wrapper.querySelectorAll('.notinterested-btn').forEach((btn) => btn.remove());
+
+  if (wrapper.firstElementChild === anchor && wrapper.childElementCount === 1) {
+    const parent = wrapper.parentElement;
+    if (parent) {
+      parent.insertBefore(anchor, wrapper);
+      wrapper.remove();
+    }
+  } else if (!wrapper.querySelector('.notinterested-btn') && wrapper.childElementCount === 0) {
+    wrapper.remove();
+  }
 }
 
 function getVideoContainer(anchor) {
