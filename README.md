@@ -2,6 +2,7 @@
 
 A lightweight Chrome extension that adds a **Not Interested** button to every YouTube thumbnail, giving you full control over the videos that appear in your feed.
 
+Link: https://chromewebstore.google.com/detail/youtube-quick-not-interes/edlpihldeeedcfnalnccnpcfpodogcmg?hl=en-US
 ---
 
 ## Table of Contents
