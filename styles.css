@@ -1,12 +1,16 @@
 .notinterested-btn {
   position: absolute !important;
   bottom: -54px !important;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   right: 0px !important;
   width: 24px !important;
   height: 24px !important;
-  background-color: rgba(255, 0, 0, 0.8) !important;
+  background-color: transparent !important;
   color: white !important;
-  border: 1px solid white !important;
+  border: 1px none !important;
   border-radius: 3px !important;
   cursor: pointer !important;
   font-size: 14px !important;
@@ -18,6 +22,12 @@
   visibility: visible !important;
   display: block !important;
   pointer-events: auto !important;
+}
+
+.notinterested-btn {
+  width: 100%;
+  object-fit: contain;
+  aspect-ratio: 1/1;
 }
 
 a.yt-lockup-view-model__content-image {
