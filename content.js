@@ -57,6 +57,14 @@ const BUTTONLESS_CONTAINER_SELECTORS = [
 
 const BUTTONLESS_CONTAINER_SELECTOR = BUTTONLESS_CONTAINER_SELECTORS.join(', ');
 
+function isChannelPage() {
+  const path = window.location.pathname || '';
+  return path.startsWith('/@') ||
+    path.startsWith('/channel/') ||
+    path.startsWith('/c/') ||
+    path.startsWith('/user/');
+}
+
 const SPRITE_ELEMENT_ID = 'nqi-action-sprite';
 const NOT_INTERESTED_SYMBOL_ID = 'nqi-icon-not-interested';
 const DONT_RECOMMEND_SYMBOL_ID = 'nqi-icon-dont-recommend';
@@ -114,6 +122,11 @@ function createActionButton(wrapper, modifierClass, title, symbolId, onClick) {
 
 function addButton(anchor) {
   if (!anchor || !anchor.parentElement) return;
+
+  if (isChannelPage()) {
+    cleanupButtons(anchor);
+    return;
+  }
 
   const container = getVideoContainer(anchor);
   if (shouldSkipButtons(container)) {
