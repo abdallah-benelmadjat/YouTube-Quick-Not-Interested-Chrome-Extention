@@ -5,9 +5,9 @@
 
 .notinterested-btn {
   position: absolute !important;
-  right: 5px !important;
-  width: 28px !important;
-  height: 28px !important;
+  left: 5px !important;
+  width: 24px !important;
+  height: 24px !important;
   background-color: rgba(255, 0, 0, 0.3) !important;
   color: white !important;
   border: 1px solid rgba(255, 255, 255, 0.6) !important;
@@ -22,6 +22,7 @@
   pointer-events: auto !important;
   padding: 0 !important;
   transition: background-color 0.2s ease !important;
+  opacity: 0.6;
 }
 
 .notinterested-btn:hover {
@@ -29,18 +30,17 @@
 }
 
 .notinterested-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 100%;
+  height: 100%;
   fill: currentColor;
-  pointer-events: none;
 }
 
 .notinterested-btn--primary {
-  bottom: -54px !important;
+  top: 4px !important;
 }
 
 .notinterested-btn--secondary {
-  bottom: -90px !important;
+  top: 30px !important;
 }
 
 a.yt-lockup-view-model__content-image {
