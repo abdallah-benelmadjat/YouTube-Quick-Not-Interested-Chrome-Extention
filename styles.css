@@ -23,3 +23,8 @@
 a.yt-lockup-view-model__content-image {
   position: relative;
 }
+
+.notinterested-wrapper {
+  position: relative !important;
+  display: block !important;
+}

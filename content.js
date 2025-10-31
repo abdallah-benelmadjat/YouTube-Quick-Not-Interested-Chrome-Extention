@@ -1,18 +1,39 @@
 // Dismissal reason preference
 let preferredReason = 'first';
 
+function normalizeText(text) {
+  return (text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+const NOT_INTERESTED_VARIANTS = [
+  'not interested',
+  'не интересует',
+];
+
 // Function to add button to a video thumbnail
 function addButton(anchor) {
+  if (!anchor || !anchor.parentElement) return;
+
+  let wrapper = anchor.closest('.notinterested-wrapper');
+
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.className = 'notinterested-wrapper';
+    anchor.parentElement.insertBefore(wrapper, anchor);
+    wrapper.appendChild(anchor);
+  }
+
   // Check if already has button
-  if (anchor.querySelector('.notinterested-btn')) return;
+  if (wrapper.querySelector('.notinterested-btn')) return;
 
   const btn = document.createElement('button');
   btn.className = 'notinterested-btn';
   btn.textContent = 'X';
   btn.title = 'Not Interested';
-  anchor.appendChild(btn);
+  wrapper.appendChild(btn);
 
   btn.addEventListener('click', (e) => {
+    console.log("asdf");
     e.preventDefault();
     e.stopPropagation();
     handleNotInterested(anchor);
@@ -30,7 +51,10 @@ function handleNotInterested(anchor) {
   console.log('videoContainer:', videoContainer);
 
   // Find menu button (three dots)
-  const menuBtn = videoContainer ? videoContainer.querySelector('[aria-label="More actions"]') : null;
+  const menuBtn = videoContainer ? (
+    videoContainer.querySelector('.yt-lockup-metadata-view-model__menu-button button') ||
+    videoContainer.querySelector('button[aria-label="More actions"], button[aria-label="More options"], button[aria-label="More"], button[aria-label="Options"], button[aria-label="Menu"], button[aria-label="Ещё"]')
+  ) : null;
 
   console.log('menuBtn:', menuBtn);
 
@@ -127,12 +151,14 @@ function findSubmitButton() {
   // Find the "Not Interested" menu item
 function findNotInterestedItem() {
   // Find items in the dropdown menu
-  const items = document.querySelectorAll('yt-list-view-model yt-list-item-view-model[role="menuitem"]');
+  const menuSelector = 'tp-yt-iron-dropdown:not([aria-hidden="true"]) yt-list-item-view-model[role="menuitem"]';
+  const items = document.querySelectorAll(menuSelector);
   console.log('yt-list-item-view-model items found:', items.length);
   for (const item of items) {
     const titleSpan = item.querySelector('.yt-core-attributed-string');
-    console.log('Item text:', titleSpan ? titleSpan.textContent.trim() : 'No title span');
-    if (titleSpan && titleSpan.textContent.trim() === 'Not interested') {
+    const text = normalizeText(titleSpan ? titleSpan.textContent : '');
+    console.log('Item text:', text || 'No title span');
+    if (titleSpan && NOT_INTERESTED_VARIANTS.includes(text)) {
       return item;
     }
   }
