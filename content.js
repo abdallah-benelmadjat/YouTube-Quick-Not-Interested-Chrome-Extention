@@ -17,6 +17,33 @@ const DONT_RECOMMEND_VARIANTS = [
   'не рекомендовать этот канал',
 ];
 
+const VIDEO_ANCHOR_SELECTORS = [
+  'a.yt-lockup-view-model__content-image',
+  'ytd-rich-item-renderer a#thumbnail',
+  'ytd-video-renderer a#thumbnail',
+  'ytd-grid-video-renderer a#thumbnail',
+  'ytd-playlist-panel-video-renderer a#thumbnail',
+  'ytd-compact-video-renderer a#thumbnail',
+  'ytd-compact-radio-renderer a#thumbnail',
+  'ytd-compact-playlist-renderer a#thumbnail',
+  'ytd-compact-autoplay-renderer a#thumbnail',
+];
+
+const VIDEO_CONTAINER_SELECTORS = [
+  'ytd-rich-item-renderer',
+  'ytd-grid-video-renderer',
+  'ytd-video-renderer',
+  'ytd-playlist-panel-video-renderer',
+  'ytd-compact-video-renderer',
+  'ytd-compact-radio-renderer',
+  'ytd-compact-playlist-renderer',
+  'ytd-compact-autoplay-renderer',
+  'yt-lockup-view-model',
+  '.yt-lockup-view-model',
+  '.yt-lockup-view-model--wrapper',
+  '.style-scope.ytd-item-section-renderer',
+];
+
 const SPRITE_ELEMENT_ID = 'nqi-action-sprite';
 const NOT_INTERESTED_SYMBOL_ID = 'nqi-icon-not-interested';
 const DONT_RECOMMEND_SYMBOL_ID = 'nqi-icon-dont-recommend';
@@ -109,15 +136,36 @@ function addButton(anchor) {
 
 function getVideoContainer(anchor) {
   if (!anchor) return null;
-  return anchor.closest('ytd-rich-item-renderer') ||
-    anchor.closest('ytd-video-renderer') ||
-    anchor.closest('[class*="lockup"]') ||
-    (anchor.parentElement ? anchor.parentElement.parentElement : null);
+  for (const selector of VIDEO_CONTAINER_SELECTORS) {
+    const container = anchor.closest(selector);
+    if (container && container !== anchor) {
+      return container;
+    }
+  }
+
+  const fallback = anchor.closest('[class*="lockup"]');
+  if (fallback && fallback !== anchor) {
+    return fallback;
+  }
+
+  const parent = anchor.parentElement;
+  if (!parent) return null;
+
+  for (const selector of VIDEO_CONTAINER_SELECTORS) {
+    const container = parent.closest(selector);
+    if (container && container !== anchor) {
+      return container;
+    }
+  }
+
+  return parent.parentElement || parent;
 }
 
 function getMenuButton(videoContainer) {
   if (!videoContainer) return null;
   return videoContainer.querySelector('.yt-lockup-metadata-view-model__menu-button button') ||
+    videoContainer.querySelector('#menu button') ||
+    videoContainer.querySelector('ytd-menu-renderer button') ||
     videoContainer.querySelector('button[aria-label="More actions"], button[aria-label="More options"], button[aria-label="More"], button[aria-label="Options"], button[aria-label="Menu"], button[aria-label="Ещё"]');
 }
 
@@ -257,18 +305,21 @@ function findMenuItem(variants) {
 }
 
 function addButtonsToVideos() {
-  document.querySelectorAll('a.yt-lockup-view-model__content-image').forEach(addButton);
+  VIDEO_ANCHOR_SELECTORS.forEach((selector) => {
+    document.querySelectorAll(selector).forEach(addButton);
+  });
 }
 
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     mutation.addedNodes.forEach((node) => {
       if (node.nodeType === Node.ELEMENT_NODE) {
-        if (node.matches('a.yt-lockup-view-model__content-image')) {
-          addButton(node);
-        } else {
-          node.querySelectorAll('a.yt-lockup-view-model__content-image').forEach(addButton);
-        }
+        VIDEO_ANCHOR_SELECTORS.forEach((selector) => {
+          if (node.matches(selector)) {
+            addButton(node);
+          }
+          node.querySelectorAll(selector).forEach(addButton);
+        });
       }
     });
   });
