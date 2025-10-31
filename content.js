@@ -10,7 +10,30 @@ const NOT_INTERESTED_VARIANTS = [
   'не интересует',
 ];
 
-// Function to add button to a video thumbnail
+const DONT_RECOMMEND_VARIANTS = [
+  "don't recommend channel",
+  "don't recommend this channel",
+  'не рекомендовать видео с этого канала',
+  'не рекомендовать этот канал',
+];
+
+const NOT_INTERESTED_ICON = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" focusable="false" aria-hidden="true" style="pointer-events: none; display: inherit; width: 100%; height: 100%;"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1Zm0 2a9 9 0 018.246 12.605L4.755 6.661A8.99 8.99 0 0112 3ZM3.754 8.393l15.491 8.944A9 9 0 013.754 8.393Z"></path></svg>';
+const DONT_RECOMMEND_ICON = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" focusable="false" aria-hidden="true" style="pointer-events: none; display: inherit; width: 100%; height: 100%;"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1Zm0 2a9 9 0 110 18.001A9 9 0 0112 3Zm4 8H8a1 1 0 000 2h8a1 1 0 000-2Z"></path></svg>';
+
+function createActionButton(wrapper, modifierClass, title, iconMarkup, onClick) {
+  const btn = document.createElement('button');
+  btn.className = `notinterested-btn ${modifierClass}`;
+  btn.title = title;
+  btn.innerHTML = iconMarkup;
+  btn.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onClick(event);
+  });
+  wrapper.appendChild(btn);
+  return btn;
+}
+
 function addButton(anchor) {
   if (!anchor || !anchor.parentElement) return;
 
@@ -23,87 +46,120 @@ function addButton(anchor) {
     wrapper.appendChild(anchor);
   }
 
-  // Check if already has button
-  if (wrapper.querySelector('.notinterested-btn')) return;
+  if (!wrapper.querySelector('.notinterested-btn--primary')) {
+    createActionButton(
+      wrapper,
+      'notinterested-btn--primary',
+      'Not Interested',
+      NOT_INTERESTED_ICON,
+      () => handleNotInterested(anchor),
+    );
+  }
 
-  const btn = document.createElement('button');
-  btn.className = 'notinterested-btn';
-  btn.title = 'Not Interested';
-  btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="red" height="24" viewBox="0 0 24 24" width="24" focusable="false" aria-hidden="true" style="pointer-events: none; display: inherit; width: 100%; height: 100%;"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1Zm0 2a9 9 0 018.246 12.605L4.755 6.661A8.99 8.99 0 0112 3ZM3.754 8.393l15.491 8.944A9 9 0 013.754 8.393Z"></path></svg>';
-  wrapper.appendChild(btn);
-
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleNotInterested(anchor);
-  });
-}
-
-// Function to handle not interested
-function handleNotInterested(anchor) {
-  // Find the video container (adjust selector based on actual DOM)
-  const videoContainer = anchor.closest('ytd-rich-item-renderer') ||
-                         anchor.closest('ytd-video-renderer') ||
-                         anchor.closest('[class*="lockup"]') ||
-                         anchor.parentElement.parentElement; // Fallback
-
-  console.log('videoContainer:', videoContainer);
-
-  // Find menu button (three dots)
-  const menuBtn = videoContainer ? (
-    videoContainer.querySelector('.yt-lockup-metadata-view-model__menu-button button') ||
-    videoContainer.querySelector('button[aria-label="More actions"], button[aria-label="More options"], button[aria-label="More"], button[aria-label="Options"], button[aria-label="Menu"], button[aria-label="Ещё"]')
-  ) : null;
-
-  console.log('menuBtn:', menuBtn);
-
-  if (menuBtn) {
-    menuBtn.click();
-    console.log('Menu button clicked');
-    // Wait for menu to appear and click "Not Interested"
-    setTimeout(() => {
-      const notInterestedItem = findNotInterestedItem();
-      console.log('notInterestedItem:', notInterestedItem);
-      if (notInterestedItem) {
-        notInterestedItem.click();
-        console.log('Not interested item clicked');
-        // Wait for dialog to appear, select reason, and submit
-        setTimeout(() => {
-          const reasonElement = findDismissalReason();
-          console.log('reasonElement:', reasonElement);
-          if (reasonElement) {
-            reasonElement.click();
-            console.log('Reason selected');
-            // Wait a bit then click submit
-            setTimeout(() => {
-              const submitBtn = findSubmitButton();
-              console.log('submitBtn:', submitBtn);
-              if (submitBtn && !submitBtn.disabled) {
-                submitBtn.click();
-                console.log('Submit clicked');
-                // Wait and close menu
-                setTimeout(() => {
-                  menuBtn.click();
-                  console.log('Menu closed');
-                }, 300);
-              } else {
-                console.log('Submit button not found or disabled');
-              }
-            }, 100);
-          } else {
-            console.log('No dismissal reason found');
-          }
-        }, 300);
-      } else {
-        console.log('No not interested item found');
-      }
-    }, 300);
-  } else {
-    console.log('No menu button found');
+  if (!wrapper.querySelector('.notinterested-btn--secondary')) {
+    createActionButton(
+      wrapper,
+      'notinterested-btn--secondary',
+      "Don't recommend channel",
+      DONT_RECOMMEND_ICON,
+      () => handleDontRecommend(anchor),
+    );
   }
 }
 
-// Find the cancel button in the dialog
+function getVideoContainer(anchor) {
+  if (!anchor) return null;
+  return anchor.closest('ytd-rich-item-renderer') ||
+         anchor.closest('ytd-video-renderer') ||
+         anchor.closest('[class*="lockup"]') ||
+         (anchor.parentElement ? anchor.parentElement.parentElement : null);
+}
+
+function getMenuButton(videoContainer) {
+  if (!videoContainer) return null;
+  return videoContainer.querySelector('.yt-lockup-metadata-view-model__menu-button button') ||
+         videoContainer.querySelector('button[aria-label="More actions"], button[aria-label="More options"], button[aria-label="More"], button[aria-label="Options"], button[aria-label="Menu"], button[aria-label="Ещё"]');
+}
+
+function openVideoMenu(anchor) {
+  const videoContainer = getVideoContainer(anchor);
+  console.log('videoContainer:', videoContainer);
+  const menuBtn = getMenuButton(videoContainer);
+  console.log('menuBtn:', menuBtn);
+
+  if (!menuBtn) {
+    console.log('No menu button found');
+    return null;
+  }
+
+  menuBtn.click();
+  console.log('Menu button clicked');
+  return menuBtn;
+}
+
+function handleNotInterested(anchor) {
+  const menuBtn = openVideoMenu(anchor);
+  if (!menuBtn) return;
+
+  setTimeout(() => {
+    const menuItem = findMenuItem(NOT_INTERESTED_VARIANTS);
+    console.log('notInterestedItem:', menuItem);
+    if (!menuItem) {
+      console.log('No not interested item found');
+      return;
+    }
+
+    menuItem.click();
+    console.log('Not interested item clicked');
+
+    setTimeout(() => {
+      const reasonElement = findDismissalReason();
+      console.log('reasonElement:', reasonElement);
+      if (!reasonElement) {
+        console.log('No dismissal reason found');
+        return;
+      }
+
+      reasonElement.click();
+      console.log('Reason selected');
+
+      setTimeout(() => {
+        const submitBtn = findSubmitButton();
+        console.log('submitBtn:', submitBtn);
+        if (submitBtn && !submitBtn.disabled) {
+          submitBtn.click();
+          console.log('Submit clicked');
+          setTimeout(() => {
+            if (menuBtn && document.contains(menuBtn)) {
+              menuBtn.click();
+              console.log('Menu closed');
+            }
+          }, 300);
+        } else {
+          console.log('Submit button not found or disabled');
+        }
+      }, 100);
+    }, 300);
+  }, 300);
+}
+
+function handleDontRecommend(anchor) {
+  const menuBtn = openVideoMenu(anchor);
+  if (!menuBtn) return;
+
+  setTimeout(() => {
+    const menuItem = findMenuItem(DONT_RECOMMEND_VARIANTS);
+    console.log("dontRecommendItem:", menuItem);
+    if (!menuItem) {
+      console.log("No don't recommend item found");
+      return;
+    }
+
+    menuItem.click();
+    console.log("Don't recommend item clicked");
+  }, 300);
+}
+
 function findCancelButton() {
   const buttons = document.querySelectorAll('button.yt-spec-button-shape-next');
   for (const btn of buttons) {
@@ -115,19 +171,17 @@ function findCancelButton() {
   return null;
 }
 
-// Find a dismissal reason in the dialog
 function findDismissalReason() {
-  // Look for dismissal reasons like "I don't like the video"
   const reasons = document.querySelectorAll('.dismissal-view-style-compact-tall .yt-core-attributed-string');
   let selectedReason = null;
   if (preferredReason === 'first') {
     selectedReason = reasons.length > 0 ? reasons[0] : null;
   } else if (preferredReason === 'watched') {
-    selectedReason = Array.from(reasons).find(r => r.textContent.trim() === "I've already watched the video");
-    if (!selectedReason) selectedReason = reasons[0]; // fallback
+    selectedReason = Array.from(reasons).find((r) => r.textContent.trim() === "I've already watched the video");
+    if (!selectedReason) selectedReason = reasons[0];
   } else if (preferredReason === 'dont_like') {
-    selectedReason = Array.from(reasons).find(r => r.textContent.trim() === "I don't like the video");
-    if (!selectedReason) selectedReason = reasons[0]; // fallback
+    selectedReason = Array.from(reasons).find((r) => r.textContent.trim() === "I don't like the video");
+    if (!selectedReason) selectedReason = reasons[0];
   }
   if (selectedReason) {
     return selectedReason.closest('[role="radio"], [tabindex]');
@@ -135,7 +189,6 @@ function findDismissalReason() {
   return null;
 }
 
-// Find the submit button in the dialog
 function findSubmitButton() {
   const buttons = document.querySelectorAll('button.yt-spec-button-shape-next');
   for (const btn of buttons) {
@@ -147,29 +200,26 @@ function findSubmitButton() {
   return null;
 }
 
-  // Find the "Not Interested" menu item
-function findNotInterestedItem() {
-  // Find items in the dropdown menu
+function findMenuItem(variants) {
   const menuSelector = 'tp-yt-iron-dropdown:not([aria-hidden="true"]) yt-list-item-view-model[role="menuitem"]';
   const items = document.querySelectorAll(menuSelector);
+  const normalizedVariants = variants.map(normalizeText);
   console.log('yt-list-item-view-model items found:', items.length);
   for (const item of items) {
     const titleSpan = item.querySelector('.yt-core-attributed-string');
     const text = normalizeText(titleSpan ? titleSpan.textContent : '');
     console.log('Item text:', text || 'No title span');
-    if (titleSpan && NOT_INTERESTED_VARIANTS.includes(text)) {
+    if (titleSpan && normalizedVariants.includes(text)) {
       return item;
     }
   }
-
   return null;
 }
-// Add buttons to all current videos
+
 function addButtonsToVideos() {
   document.querySelectorAll('a.yt-lockup-view-model__content-image').forEach(addButton);
 }
 
-// Observer for new videos
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     mutation.addedNodes.forEach((node) => {
@@ -184,7 +234,6 @@ const observer = new MutationObserver((mutations) => {
   });
 });
 
-// Start when DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
@@ -192,7 +241,6 @@ if (document.readyState === 'loading') {
 }
 
 function init() {
-  // Load user preferences
   chrome.storage.sync.get(['dismissalReason'], (result) => {
     preferredReason = result.dismissalReason || 'first';
     console.log('Loaded preferred reason:', preferredReason);

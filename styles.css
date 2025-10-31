@@ -1,40 +1,48 @@
-.notinterested-btn {
-  position: absolute !important;
-  bottom: -54px !important;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  right: 0px !important;
-  width: 24px !important;
-  height: 24px !important;
-  background-color: transparent !important;
-  color: white !important;
-  border: 1px none !important;
-  border-radius: 3px !important;
-  cursor: pointer !important;
-  font-size: 14px !important;
-  font-weight: bold !important;
-  line-height: 1 !important;
-  text-align: center !important;
-  z-index: 999999 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+.notinterested-wrapper {
+  position: relative !important;
   display: block !important;
-  pointer-events: auto !important;
 }
 
 .notinterested-btn {
-  width: 100%;
-  object-fit: contain;
-  aspect-ratio: 1/1;
+  position: absolute !important;
+  right: 5px !important;
+  width: 28px !important;
+  height: 28px !important;
+  background-color: transparent !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  z-index: 999999 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: auto !important;
+  padding: 0 !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.notinterested-btn:hover {
+  background-color: rgba(255, 0, 0, 0.9) !important;
+}
+
+.notinterested-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+.notinterested-btn--primary {
+  bottom: -54px !important;
+}
+
+.notinterested-btn--secondary {
+  bottom: -90px !important;
 }
 
 a.yt-lockup-view-model__content-image {
   position: relative;
-}
-
-.notinterested-wrapper {
-  position: relative !important;
-  display: block !important;
 }
