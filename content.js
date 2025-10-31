@@ -17,14 +17,52 @@ const DONT_RECOMMEND_VARIANTS = [
   'не рекомендовать этот канал',
 ];
 
-const NOT_INTERESTED_ICON = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" focusable="false" aria-hidden="true" style="pointer-events: none; display: inherit; width: 100%; height: 100%;"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1Zm0 2a9 9 0 018.246 12.605L4.755 6.661A8.99 8.99 0 0112 3ZM3.754 8.393l15.491 8.944A9 9 0 013.754 8.393Z"></path></svg>';
-const DONT_RECOMMEND_ICON = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" focusable="false" aria-hidden="true" style="pointer-events: none; display: inherit; width: 100%; height: 100%;"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1Zm0 2a9 9 0 110 18.001A9 9 0 0112 3Zm4 8H8a1 1 0 000 2h8a1 1 0 000-2Z"></path></svg>';
+const SPRITE_ELEMENT_ID = 'nqi-action-sprite';
+const NOT_INTERESTED_SYMBOL_ID = 'nqi-icon-not-interested';
+const DONT_RECOMMEND_SYMBOL_ID = 'nqi-icon-dont-recommend';
+const SPRITE_MARKUP = `
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false" id="${SPRITE_ELEMENT_ID}">
+  <symbol id="${NOT_INTERESTED_SYMBOL_ID}" viewBox="0 0 24 24">
+    <path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1Zm0 2a9 9 0 018.246 12.605L4.755 6.661A8.99 8.99 0 0112 3ZM3.754 8.393l15.491 8.944A9 9 0 013.754 8.393Z"></path>
+  </symbol>
+  <symbol id="${DONT_RECOMMEND_SYMBOL_ID}" viewBox="0 0 24 24">
+    <path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1Zm0 2a9 9 0 110 18.001A9 9 0 0112 3Zm4 8H8a1 1 0 000 2h8a1 1 0 000-2Z"></path>
+  </symbol>
+</svg>
+`.trim();
 
-function createActionButton(wrapper, modifierClass, title, iconMarkup, onClick) {
+function ensureSpriteInjected() {
+  if (document.getElementById(SPRITE_ELEMENT_ID)) return;
+  const container = document.createElement('div');
+  container.innerHTML = SPRITE_MARKUP;
+  const svg = container.firstElementChild;
+  if (svg) {
+    document.body.appendChild(svg);
+  }
+}
+
+function createIconElement(symbolId) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('notinterested-btn__icon');
+  svg.setAttribute('focusable', 'false');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('width', '24');
+  svg.setAttribute('height', '24');
+
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', `#${symbolId}`);
+  use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${symbolId}`);
+  svg.appendChild(use);
+
+  return svg;
+}
+
+function createActionButton(wrapper, modifierClass, title, symbolId, onClick) {
   const btn = document.createElement('button');
   btn.className = `notinterested-btn ${modifierClass}`;
   btn.title = title;
-  btn.innerHTML = iconMarkup;
+  btn.appendChild(createIconElement(symbolId));
   btn.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -36,6 +74,8 @@ function createActionButton(wrapper, modifierClass, title, iconMarkup, onClick) 
 
 function addButton(anchor) {
   if (!anchor || !anchor.parentElement) return;
+
+  ensureSpriteInjected();
 
   let wrapper = anchor.closest('.notinterested-wrapper');
 
@@ -51,7 +91,7 @@ function addButton(anchor) {
       wrapper,
       'notinterested-btn--primary',
       'Not Interested',
-      NOT_INTERESTED_ICON,
+      NOT_INTERESTED_SYMBOL_ID,
       () => handleNotInterested(anchor),
     );
   }
@@ -61,7 +101,7 @@ function addButton(anchor) {
       wrapper,
       'notinterested-btn--secondary',
       "Don't recommend channel",
-      DONT_RECOMMEND_ICON,
+      DONT_RECOMMEND_SYMBOL_ID,
       () => handleDontRecommend(anchor),
     );
   }
@@ -70,15 +110,15 @@ function addButton(anchor) {
 function getVideoContainer(anchor) {
   if (!anchor) return null;
   return anchor.closest('ytd-rich-item-renderer') ||
-         anchor.closest('ytd-video-renderer') ||
-         anchor.closest('[class*="lockup"]') ||
-         (anchor.parentElement ? anchor.parentElement.parentElement : null);
+    anchor.closest('ytd-video-renderer') ||
+    anchor.closest('[class*="lockup"]') ||
+    (anchor.parentElement ? anchor.parentElement.parentElement : null);
 }
 
 function getMenuButton(videoContainer) {
   if (!videoContainer) return null;
   return videoContainer.querySelector('.yt-lockup-metadata-view-model__menu-button button') ||
-         videoContainer.querySelector('button[aria-label="More actions"], button[aria-label="More options"], button[aria-label="More"], button[aria-label="Options"], button[aria-label="Menu"], button[aria-label="Ещё"]');
+    videoContainer.querySelector('button[aria-label="More actions"], button[aria-label="More options"], button[aria-label="More"], button[aria-label="Options"], button[aria-label="Menu"], button[aria-label="Ещё"]');
 }
 
 function openVideoMenu(anchor) {
@@ -149,7 +189,7 @@ function handleDontRecommend(anchor) {
 
   setTimeout(() => {
     const menuItem = findMenuItem(DONT_RECOMMEND_VARIANTS);
-    console.log("dontRecommendItem:", menuItem);
+    console.log('dontRecommendItem:', menuItem);
     if (!menuItem) {
       console.log("No don't recommend item found");
       return;
@@ -246,6 +286,7 @@ function init() {
     console.log('Loaded preferred reason:', preferredReason);
   });
 
+  ensureSpriteInjected();
   addButtonsToVideos();
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, {childList: true, subtree: true});
 }
