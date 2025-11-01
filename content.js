@@ -1,5 +1,7 @@
 // Dismissal reason preference
 let preferredReason = 'first';
+let lastActiveAnchor = null;
+let shortcutListenerBound = false;
 
 function normalizeText(text) {
   return (text || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -123,6 +125,18 @@ function createActionButton(wrapper, modifierClass, title, symbolId, onClick) {
 function addButton(anchor) {
   if (!anchor || !anchor.parentElement) return;
 
+  if (!anchor.dataset.nqiTrackingBound) {
+    const updateActiveAnchor = () => {
+      if (anchor && document.contains(anchor)) {
+        lastActiveAnchor = anchor;
+      }
+    };
+    anchor.addEventListener('mouseenter', updateActiveAnchor);
+    anchor.addEventListener('pointerenter', updateActiveAnchor);
+    anchor.addEventListener('focus', updateActiveAnchor, true);
+    anchor.dataset.nqiTrackingBound = '1';
+  }
+
   if (isChannelPage()) {
     cleanupButtons(anchor);
     return;
@@ -168,6 +182,38 @@ function addButton(anchor) {
       () => handleDontRecommend(anchor),
     );
   }
+}
+
+function getActiveAnchor() {
+  if (lastActiveAnchor && document.contains(lastActiveAnchor)) {
+    return lastActiveAnchor;
+  }
+  return null;
+}
+
+function isEditableElement(element) {
+  if (!(element instanceof Element)) return false;
+  if (element.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""], [role="textbox"]')) {
+    return true;
+  }
+  return element instanceof HTMLInputElement ||
+    element instanceof HTMLTextAreaElement ||
+    element instanceof HTMLSelectElement ||
+    element.isContentEditable;
+}
+
+function handleGlobalShortcut(event) {
+  if (!event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.code !== 'KeyQ') return;
+  if (isEditableElement(event.target)) return;
+
+  const anchor = getActiveAnchor();
+  if (!anchor) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  Promise.resolve(handleNotInterested(anchor)).catch((error) => console.error(error));
 }
 
 function shouldShowDontRecommend(anchor, containerOverride) {
@@ -477,6 +523,11 @@ if (document.readyState === 'loading') {
 }
 
 function init() {
+  if (!shortcutListenerBound) {
+    document.addEventListener('keydown', handleGlobalShortcut, true);
+    shortcutListenerBound = true;
+  }
+
   chrome.storage.sync.get(['dismissalReason'], (result) => {
     preferredReason = result.dismissalReason || 'first';
     console.log('Loaded preferred reason:', preferredReason);
