@@ -6,11 +6,11 @@
 .notinterested-btn {
   position: absolute !important;
   left: 4px !important;
-  width: 24px !important;
-  height: 24px !important;
-  background-color: rgba(255, 0, 0, 0.3) !important;
+  width: 32px !important;
+  height: 32px !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
   color: white !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: none !important;
   border-radius: 50% !important;
   cursor: pointer !important;
   z-index: 2 !important;
@@ -22,6 +22,7 @@
   pointer-events: auto !important;
   padding: 0 !important;
   transition: background-color 0.2s ease !important;
+  backdrop-filter: blur(8px);
 }
 
 .notinterested-wrapper:hover .notinterested-btn,
@@ -30,12 +31,12 @@
 }
 
 .notinterested-btn:hover {
-  background-color: rgba(255, 0, 0, 0.9) !important;
+  background-color: rgba(40, 40, 40, 0.6) !important;
 }
 
 .notinterested-btn__icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   fill: currentColor;
   pointer-events: none;
 }
@@ -45,9 +46,20 @@
 }
 
 .notinterested-btn--secondary {
-  top: 30px !important;
+  top: 40px !important;
 }
 
 a.yt-lockup-view-model__content-image {
   position: relative;
+}
+
+html.nqi-hide-yt-menu tp-yt-iron-dropdown[role="menu"],
+html.nqi-hide-yt-menu tp-yt-iron-dropdown.ytd-popup-container {
+  opacity: 0 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+html.nqi-hide-yt-menu tp-yt-iron-dropdown[role="menu"] #items {
+  pointer-events: none !important;
 }

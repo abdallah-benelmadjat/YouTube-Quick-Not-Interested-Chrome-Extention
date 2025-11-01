@@ -1,5 +1,7 @@
 // Dismissal reason preference
 let preferredReason = 'first';
+let lastActiveAnchor = null;
+let shortcutListenerBound = false;
 
 function normalizeText(text) {
   return (text || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -114,7 +116,7 @@ function createActionButton(wrapper, modifierClass, title, symbolId, onClick) {
   btn.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    onClick(event);
+    Promise.resolve(onClick(event)).catch((error) => console.error(error));
   });
   wrapper.appendChild(btn);
   return btn;
@@ -122,6 +124,18 @@ function createActionButton(wrapper, modifierClass, title, symbolId, onClick) {
 
 function addButton(anchor) {
   if (!anchor || !anchor.parentElement) return;
+
+  if (!anchor.dataset.nqiTrackingBound) {
+    const updateActiveAnchor = () => {
+      if (anchor && document.contains(anchor)) {
+        lastActiveAnchor = anchor;
+      }
+    };
+    anchor.addEventListener('mouseenter', updateActiveAnchor);
+    anchor.addEventListener('pointerenter', updateActiveAnchor);
+    anchor.addEventListener('focus', updateActiveAnchor, true);
+    anchor.dataset.nqiTrackingBound = '1';
+  }
 
   if (isChannelPage()) {
     cleanupButtons(anchor);
@@ -168,6 +182,38 @@ function addButton(anchor) {
       () => handleDontRecommend(anchor),
     );
   }
+}
+
+function getActiveAnchor() {
+  if (lastActiveAnchor && document.contains(lastActiveAnchor)) {
+    return lastActiveAnchor;
+  }
+  return null;
+}
+
+function isEditableElement(element) {
+  if (!(element instanceof Element)) return false;
+  if (element.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""], [role="textbox"]')) {
+    return true;
+  }
+  return element instanceof HTMLInputElement ||
+    element instanceof HTMLTextAreaElement ||
+    element instanceof HTMLSelectElement ||
+    element.isContentEditable;
+}
+
+function handleGlobalShortcut(event) {
+  if (!event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.code !== 'KeyQ') return;
+  if (isEditableElement(event.target)) return;
+
+  const anchor = getActiveAnchor();
+  if (!anchor) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  Promise.resolve(handleNotInterested(anchor)).catch((error) => console.error(error));
 }
 
 function shouldShowDontRecommend(anchor, containerOverride) {
@@ -261,7 +307,57 @@ function getMenuButton(videoContainer) {
     videoContainer.querySelector('button[aria-label="More actions"], button[aria-label="More options"], button[aria-label="More"], button[aria-label="Options"], button[aria-label="Menu"], button[aria-label="Ещё"]');
 }
 
-function openVideoMenu(anchor) {
+const MENU_WAIT_TIMEOUT = 1500;
+const MENU_POLL_INTERVAL = 16;
+
+function waitForValue(getter, {timeout = MENU_WAIT_TIMEOUT, interval = MENU_POLL_INTERVAL} = {}) {
+  return new Promise((resolve) => {
+    const deadline = Date.now() + timeout;
+
+    function check() {
+      const value = getter();
+      if (value) {
+        resolve(value);
+        return;
+      }
+
+      if (Date.now() >= deadline) {
+        resolve(null);
+        return;
+      }
+
+      setTimeout(check, interval);
+    }
+
+    check();
+  });
+}
+
+async function withMenuSuppressed(fn) {
+  document.documentElement.classList.add('nqi-hide-yt-menu');
+  try {
+    return await fn();
+  } finally {
+    document.documentElement.classList.remove('nqi-hide-yt-menu');
+  }
+}
+
+function getOpenMenuDropdown() {
+  return document.querySelector('tp-yt-iron-dropdown:not([aria-hidden="true"])');
+}
+
+function isMenuOpen() {
+  return Boolean(getOpenMenuDropdown());
+}
+
+async function closeMenu(menuBtn) {
+  if (menuBtn && document.contains(menuBtn) && isMenuOpen()) {
+    menuBtn.click();
+  }
+  await waitForValue(() => (!isMenuOpen() ? true : null), {timeout: 500});
+}
+
+async function handleNotInterested(anchor) {
   const videoContainer = getVideoContainer(anchor);
   console.log('videoContainer:', videoContainer);
   const menuBtn = getMenuButton(videoContainer);
@@ -269,75 +365,78 @@ function openVideoMenu(anchor) {
 
   if (!menuBtn) {
     console.log('No menu button found');
-    return null;
+    return;
   }
 
-  menuBtn.click();
-  console.log('Menu button clicked');
-  return menuBtn;
-}
+  await withMenuSuppressed(async () => {
+    menuBtn.click();
 
-function handleNotInterested(anchor) {
-  const menuBtn = openVideoMenu(anchor);
-  if (!menuBtn) return;
-
-  setTimeout(() => {
-    const menuItem = findMenuItem(NOT_INTERESTED_VARIANTS);
+    const menuItem = await waitForValue(() => findMenuItem(NOT_INTERESTED_VARIANTS));
     console.log('notInterestedItem:', menuItem);
     if (!menuItem) {
       console.log('No not interested item found');
+      await closeMenu(menuBtn);
       return;
     }
 
     menuItem.click();
     console.log('Not interested item clicked');
 
-    setTimeout(() => {
-      const reasonElement = findDismissalReason();
-      console.log('reasonElement:', reasonElement);
-      if (!reasonElement) {
-        console.log('No dismissal reason found');
-        return;
-      }
+    const reasonElement = await waitForValue(findDismissalReason);
+    console.log('reasonElement:', reasonElement);
+    if (!reasonElement) {
+      console.log('No dismissal reason found');
+      await closeMenu(menuBtn);
+      return;
+    }
 
-      reasonElement.click();
-      console.log('Reason selected');
+    reasonElement.click();
+    console.log('Reason selected');
 
-      setTimeout(() => {
-        const submitBtn = findSubmitButton();
-        console.log('submitBtn:', submitBtn);
-        if (submitBtn && !submitBtn.disabled) {
-          submitBtn.click();
-          console.log('Submit clicked');
-          setTimeout(() => {
-            if (menuBtn && document.contains(menuBtn)) {
-              menuBtn.click();
-              console.log('Menu closed');
-            }
-          }, 300);
-        } else {
-          console.log('Submit button not found or disabled');
-        }
-      }, 100);
-    }, 300);
-  }, 300);
+    const submitBtn = await waitForValue(() => {
+      const btn = findSubmitButton();
+      return btn && !btn.disabled ? btn : null;
+    }, {timeout: 1000});
+    console.log('submitBtn:', submitBtn);
+
+    if (submitBtn) {
+      submitBtn.click();
+      console.log('Submit clicked');
+    } else {
+      console.log('Submit button not found or disabled');
+    }
+
+    await closeMenu(menuBtn);
+  });
 }
 
-function handleDontRecommend(anchor) {
-  const menuBtn = openVideoMenu(anchor);
-  if (!menuBtn) return;
+async function handleDontRecommend(anchor) {
+  const videoContainer = getVideoContainer(anchor);
+  console.log('videoContainer:', videoContainer);
+  const menuBtn = getMenuButton(videoContainer);
+  console.log('menuBtn:', menuBtn);
 
-  setTimeout(() => {
-    const menuItem = findMenuItem(DONT_RECOMMEND_VARIANTS);
+  if (!menuBtn) {
+    console.log('No menu button found');
+    return;
+  }
+
+  await withMenuSuppressed(async () => {
+    menuBtn.click();
+
+    const menuItem = await waitForValue(() => findMenuItem(DONT_RECOMMEND_VARIANTS));
     console.log('dontRecommendItem:', menuItem);
     if (!menuItem) {
       console.log("No don't recommend item found");
+      await closeMenu(menuBtn);
       return;
     }
 
     menuItem.click();
     console.log("Don't recommend item clicked");
-  }, 300);
+
+    await closeMenu(menuBtn);
+  });
 }
 
 function findCancelButton() {
@@ -424,6 +523,11 @@ if (document.readyState === 'loading') {
 }
 
 function init() {
+  if (!shortcutListenerBound) {
+    document.addEventListener('keydown', handleGlobalShortcut, true);
+    shortcutListenerBound = true;
+  }
+
   chrome.storage.sync.get(['dismissalReason'], (result) => {
     preferredReason = result.dismissalReason || 'first';
     console.log('Loaded preferred reason:', preferredReason);
