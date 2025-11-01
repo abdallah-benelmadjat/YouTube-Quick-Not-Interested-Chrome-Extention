@@ -52,3 +52,14 @@
 a.yt-lockup-view-model__content-image {
   position: relative;
 }
+
+html.nqi-hide-yt-menu tp-yt-iron-dropdown[role="menu"],
+html.nqi-hide-yt-menu tp-yt-iron-dropdown.ytd-popup-container {
+  opacity: 0 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+html.nqi-hide-yt-menu tp-yt-iron-dropdown[role="menu"] #items {
+  pointer-events: none !important;
+}
